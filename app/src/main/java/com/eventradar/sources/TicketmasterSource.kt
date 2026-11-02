@@ -13,6 +13,9 @@ import java.time.LocalDate
 class TicketmasterSource(private val apiKey: String) : EventSource {
     override val name = "Ticketmaster"
 
+    /** Interests with a calendar feed are covered by the feed alone. */
+    override fun appliesTo(interest: Interest) = interest.feedUrl.isNullOrBlank()
+
     override suspend fun search(interest: Interest, from: LocalDate, to: LocalDate): List<FoundEvent> =
         withContext(Dispatchers.IO) {
             val url = "https://app.ticketmaster.com/discovery/v2/events.json".toHttpUrl().newBuilder()

@@ -288,7 +288,7 @@ private fun Onboarding(hasSources: Boolean, hasInterests: Boolean, onInterests: 
             color = Muted, textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(24.dp))
-        Step(1, "Add a free API key", done = hasSources, onClick = onSettings)
+        Step(1, "Add a free API key (skip for racing only)", done = hasSources, onClick = onSettings)
         Spacer(Modifier.height(10.dp))
         Step(2, "Add your interests", done = hasInterests, onClick = onInterests)
     }

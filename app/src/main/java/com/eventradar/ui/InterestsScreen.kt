@@ -61,15 +61,11 @@ import com.eventradar.data.EventEntity
 import com.eventradar.data.interests
 import com.eventradar.data.location
 import com.eventradar.data.Interest
+import com.eventradar.sources.SeriesCatalog
 
 private val categories = listOf("Motorsport", "Music", "Sport", "Comedy", "Theatre", "Festival", "Other")
 
 private val suggestions = listOf(
-    "WEC" to "Motorsport",
-    "British Rally Championship" to "Motorsport",
-    "BTCC" to "Motorsport",
-    "British Superbikes" to "Motorsport",
-    "Goodwood" to "Motorsport",
     "Premiership Rugby" to "Sport",
     "Six Nations" to "Sport",
     "Stand-up comedy" to "Comedy",
@@ -89,6 +85,7 @@ fun InterestsScreen(
     var ukOnly by rememberSaveable { mutableStateOf(true) }
     var showFeed by rememberSaveable { mutableStateOf(false) }
     var editing by remember { mutableStateOf<Interest?>(null) }
+    var picking by remember { mutableStateOf(false) }
     val focus = LocalFocusManager.current
     val counts = remember(events) {
         events.flatMap { it.interests }.groupingBy { it }.eachCount()
@@ -162,6 +159,28 @@ fun InterestsScreen(
             }
         }
 
+        item {
+            val following = interests.count { SeriesCatalog.byFeed(it.feedUrl) != null }
+            Surface(
+                onClick = { picking = true },
+                color = Panel,
+                shape = RoundedCornerShape(18.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Racing calendars", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            if (following == 0) "F1, MotoGP, BTCC, WRC, WEC and ${SeriesCatalog.all.size - 5} more — tick the ones you follow"
+                            else "Following $following of ${SeriesCatalog.all.size} series — tap to change",
+                            style = MaterialTheme.typography.bodySmall, color = Muted,
+                        )
+                    }
+                    Text("Browse", color = Flare, style = MaterialTheme.typography.labelLarge)
+                }
+            }
+        }
+
         val unused = suggestions.filter { s -> interests.none { it.name.equals(s.first, ignoreCase = true) } }
         if (unused.isNotEmpty()) {
             item {
@@ -211,6 +230,15 @@ fun InterestsScreen(
                 }
             }
         }
+    }
+
+    if (picking) {
+        SeriesPickerSheet(
+            interests = interests,
+            onFollow = { series, uk -> onAdd(series.name, "Motorsport", series.feedUrl, uk) },
+            onUnfollow = onDelete,
+            onDismiss = { picking = false },
+        )
     }
 
     editing?.let { i ->

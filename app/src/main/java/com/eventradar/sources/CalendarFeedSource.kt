@@ -34,9 +34,14 @@ class CalendarFeedSource : EventSource {
             if (!text.contains("BEGIN:VCALENDAR")) {
                 throw SourceException("Feed for ${interest.name} isn't a calendar (.ics) link")
             }
-            parse(text)
+            val events = parse(text)
                 .filter { !it.date.isBefore(from) && !it.date.isAfter(to) }
                 .filter { !interest.ukOnly || looksUk(it) }
+            // Racing feeds carry no pictures: use the series website's share image for all its rounds.
+            val fallbackImage = if (events.any { it.imageUrl == null }) {
+                SeriesCatalog.byFeed(interest.feedUrl)?.website?.let { ImageFinder.find(it) }
+            } else null
+            events.map { if (it.imageUrl == null && fallbackImage != null) it.copy(imageUrl = fallbackImage) else it }
         }
 
     // --- iCalendar parsing ---------------------------------------------------------------------
@@ -89,6 +94,8 @@ class CalendarFeedSource : EventSource {
         fun get(n: String) = props.firstOrNull { it.name == n }
         if (get("STATUS")?.value?.uppercase() == "CANCELLED") return null
         val title = get("SUMMARY")?.value?.let(::unescape)?.takeIf { it.isNotBlank() } ?: return null
+        // Feeds mark dropped rounds like "*Cancelled* F1 -R9- Grand Prix du Canada".
+        if (Regex("""^\*[^*]*(cancel|postpon|tbc)[^*]*\*""", RegexOption.IGNORE_CASE).containsMatchIn(title)) return null
         val start = get("DTSTART") ?: return null
         val (date, time) = parseStart(start) ?: return null
         val description = get("DESCRIPTION")?.value?.let(::unescape)
@@ -96,7 +103,7 @@ class CalendarFeedSource : EventSource {
 
         val link = get("URL")?.value?.trim()?.takeIf { it.startsWith("http") }
             ?: description?.let { Regex("""https?://[^\s<>"]+""").find(it)?.value?.trimEnd('.', ',', ')') }
-            ?: "https://www.google.com/search?q=" + URLEncoder.encode("$title $date", "UTF-8")
+            ?: "https://www.google.com/search?q=" + URLEncoder.encode("$title ${date.year} tickets", "UTF-8")
 
         // RFC 7986 IMAGE, or an ATTACH that's an image.
         val image = props.firstOrNull {
@@ -104,19 +111,34 @@ class CalendarFeedSource : EventSource {
                 it.value.startsWith("http")
         }?.value?.trim()
 
-        // Locations are often "Circuit, Town, Country" — first part as venue, rest as city.
-        val parts = location?.split(',')?.map { it.trim() }?.filter { it.isNotEmpty() }.orEmpty()
+        val (venue, city) = splitLocation(location)
         return FoundEvent(
             title = title,
             date = date,
             time = time,
             price = null,
-            venue = parts.firstOrNull(),
-            city = parts.drop(1).joinToString(", ").ifBlank { null },
+            venue = venue,
+            city = city,
             imageUrl = image,
             url = link,
             source = name,
         )
+    }
+
+    /**
+     * Locations look like "Croft Circuit, West Ln, Dalton On Tees, North Yorkshire DL2 2PL, UK".
+     * Venue = first part; place = last two parts once street numbers and postcodes are removed
+     * ("North Yorkshire, UK").
+     */
+    private fun splitLocation(location: String?): Pair<String?, String?> {
+        val parts = location?.split(',')?.map { it.trim().trim('\\').trim() }?.filter { it.isNotEmpty() }.orEmpty()
+        if (parts.isEmpty()) return null to null
+        val postcode = Regex("""\b[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}\b|\b\d{4,5}\b""")
+        val rest = parts.drop(1)
+            .filterNot { it.first().isDigit() }
+            .map { it.replace(postcode, "").trim() }
+            .filter { it.isNotEmpty() }
+        return parts.first() to rest.takeLast(2).joinToString(", ").ifBlank { null }
     }
 
     private val london = ZoneId.of("Europe/London")

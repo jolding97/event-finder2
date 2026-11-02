@@ -133,7 +133,7 @@ class EventRepository(private val db: AppDatabase, private val settings: Setting
 
         // Thumbnails: fill gaps from the event page's share image.
         val imageGate = Semaphore(6)
-        upserts.indices.filter { upserts[it].imageUrl == null }.map { idx ->
+        upserts.indices.filter { upserts[it].imageUrl == null && "google.com/search" !in upserts[it].url }.map { idx ->
             async {
                 imageGate.withPermit {
                     ImageFinder.find(upserts[idx].url)?.let { upserts[idx] = upserts[idx].copy(imageUrl = it) }

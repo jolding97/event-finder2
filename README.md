@@ -20,7 +20,9 @@ Everything is free. There's no AI and no pay-as-you-go service.
 | [Skiddle API](https://www.skiddle.com/api/join.php) | Free key, pasted in Settings | UK gigs, club nights, festivals |
 | Calendar feeds (.ics / webcal) | No key. Paste a feed link on an interest | Racing and rally series (BTCC, BSB, British GT, rally championships), club fixtures, venue calendars |
 
-**Calendar feeds** cover what ticket sites miss. Most series, and fan calendar sites (e.g. sync2cal, toomuchracing's Google calendars), offer an "Add to calendar", "Subscribe" or "iCal" link. Copy it and paste it into the interest. With **Only keep UK rounds** on, international series such as WEC or WRC are trimmed to their UK rounds. Turn it off for feeds that are already UK-only, like a British rally championship. Feeds usually don't include prices, so those events show "Price TBC" and link to the event page.
+**Racing calendars, built in:** the Interests tab has a *Racing calendars* list with all 56 series from [toomuchracing.com](https://toomuchracing.com/calendar/): F1, F2, F3, Formula E, IndyCar, MotoGP, WSBK, BSB, NASCAR, WEC, ELMS, IMSA, British GT, DTM, BTCC, Supercars, WRC, ERC, rallycross, drag racing, the Isle of Man TT and Goodwood. Tick a series and every round goes on your calendar. You can keep all rounds worldwide, which is good for TV, or only UK rounds. Each round links to a ticket search, and its thumbnail comes from the series' website.
+
+**Your own calendar feeds** cover anything else. Most series, and fan calendar sites (e.g. sync2cal, toomuchracing's Google calendars), offer an "Add to calendar", "Subscribe" or "iCal" link. Copy it and paste it into the interest. With **Only keep UK rounds** on, international series such as WEC or WRC are trimmed to their UK rounds. Turn it off for feeds that are already UK-only, like a British rally championship. Feeds usually don't include prices, so those events show "Price TBC" and link to the event page.
 
 Events missing an image get one from the event page's share image (`og:image`).
 
